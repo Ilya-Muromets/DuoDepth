@@ -72,21 +72,21 @@ def main():
                 points_left = pc_left.calculate(depth_frame_left)
                 points_left = np.array(points_left.get_vertices())
                 # print(points_left.shape)
-                # points_left = points_left[np.nonzero(points_left)]
+                points_left = points_left[np.nonzero(points_left)]
                 np.save(npy_dir + str(npy_counter) + "left", points_left)
                 print("File saved to " + npy_dir + str(npy_counter) + "left.npy")
 
                 # convert and save right file
                 points_right = pc_right.calculate(depth_frame_right)
                 points_right = np.array(points_right.get_vertices())
-                # points_right = points_right[np.nonzero(points_right)]
+                points_right = points_right[np.nonzero(points_right)]
                 np.save(npy_dir + str(npy_counter) + "right", points_right)
                 print("File saved to " + npy_dir + str(npy_counter) + "right.npy")
 
                 npy_counter += 1
                 if npy_counter > 200:
                     raise Exception("finished recording")
-                time.sleep(0.1)
+                # time.sleep(0.1)
 
             
             # if a is pressed save .ply
