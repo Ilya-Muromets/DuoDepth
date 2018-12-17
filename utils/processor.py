@@ -130,7 +130,7 @@ class Processor(object):
         def natural_keys(text):
             return [atoi(c) for c in re.split('(\d+)', text)]
 
-        transform = np.load("base_transform.npy")
+        transform = np.load("base_transform_new.npy")
 
         npy_list_left = glob.glob(self.file_path + "*left.npy")
         npy_list_left.sort(key=natural_keys)
