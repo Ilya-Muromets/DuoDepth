@@ -92,67 +92,18 @@ class DualNetCls(nn.Module):
         self.feat_left = PointNetfeat(global_feat=True)
         self.feat_right = PointNetfeat(global_feat=True)
 
-        self.fc1 = nn.Linear(512, 128)
-        self.fc2 = nn.Linear(128, 64)
+        self.fc1 = nn.Linear(512, 256)
+        self.fc2 = nn.Linear(256, 64)
         self.fc3 = nn.Linear(64, k)
         self.fc_drop = nn.Dropout2d()
-        self.bn1 = nn.BatchNorm1d(128)
+        self.bn1 = nn.BatchNorm1d(256)
         self.bn2 = nn.BatchNorm1d(64)
         self.relu = nn.ReLU()
     def forward(self, x_left, x_right):
         x_left, trans = self.feat_left(x_left)
         x_right, trans = self.feat_right(x_right)
-        x = torch.cat(x_left, x_right)
+        x = torch.cat((x_left, x_right), 1)
         x = F.relu(self.bn1(self.fc1(x)))
         x = F.relu(self.bn2(self.fc2(x)))
         x = self.fc3(x)
         return F.log_softmax(x, dim=0), trans
-
-class PointNetDenseCls(nn.Module):
-    def __init__(self, k = 2):
-        super(PointNetDenseCls, self).__init__()
-        self.k = k
-        self.feat = PointNetfeat(global_feat=False)
-        self.conv1 = torch.nn.Conv1d(1088, 512, 1)
-        self.conv2 = torch.nn.Conv1d(512, 256, 1)
-        self.conv3 = torch.nn.Conv1d(256, 128, 1)
-        self.conv4 = torch.nn.Conv1d(128, self.k, 1)
-        self.bn1 = nn.BatchNorm1d(512)
-        self.bn2 = nn.BatchNorm1d(256)
-        self.bn3 = nn.BatchNorm1d(128)
-
-    def forward(self, x):
-        batchsize = x.size()[0]
-        n_pts = x.size()[2]
-        x, trans = self.feat(x)
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = self.conv4(x)
-        x = x.transpose(2,1).contiguous()
-        x = F.log_softmax(x.view(-1,self.k), dim=-1)
-        x = x.view(batchsize, n_pts, self.k)
-        return x, trans
-
-
-if __name__ == '__main__':
-    sim_data = Variable(torch.rand(32,3,2500))
-    trans = STN3d()
-    out = trans(sim_data)
-    print('stn', out.size())
-
-    pointfeat = PointNetfeat(global_feat=True)
-    out, _ = pointfeat(sim_data)
-    print('global feat', out.size())
-
-    pointfeat = PointNetfeat(global_feat=False)
-    out, _ = pointfeat(sim_data)
-    print('point feat', out.size())
-
-    cls = PointNetCls(k = 5)
-    out, _ = cls(sim_data)
-    print('class', out.size())
-
-    seg = PointNetDenseCls(k = 3)
-    out, _ = seg(sim_data)
-    print('seg', out.size())

@@ -17,8 +17,8 @@ import torch.nn.functional as F
 import glob
 import time
 
-class DualNet(object):
-    def __init__(self, batchsize=32, num_points=2500, num_epoch=25, outf='cls', model='', num_classes=2, alpha=0.05, beta=0.05, ptype='', train_path, test_path):
+class PointNet(object):
+    def __init__(self, batchsize=32, num_points=2500, num_epoch=25, outf='cls', model='', num_classes=2, alpha=0.05, beta=0.05, ptype=''):
         self.batchsize=batchsize
         self.num_points=num_points	
         self.num_epoch=num_epoch
@@ -28,35 +28,21 @@ class DualNet(object):
         self.alpha=alpha
         self.beta=beta
 
-        global DualNetCls
+        global PointNetCls, PointNetDenseCls
         if ptype == '':
-            from utils.torchnet.dualnet_small import DualNetCls
+            from utils.torchnet.pointnet import PointNetCls, PointNetDenseCls
         elif ptype == 'small':
-            from utils.torchnet.pointnet_small import DualNetCls, PointNetDenseCls
+            from utils.torchnet.pointnet_small import PointNetCls, PointNetDenseCls
         elif ptype == 'dropout':
-            from utils.torchnet.pointnet_dropout import DualNetCls, PointNetDenseCls
+            from utils.torchnet.pointnet_dropout import PointNetCls, PointNetDenseCls
         elif ptype == 'normless':
-            from utils.torchnet.pointnet_normless import DualNetCls, PointNetDenseCls
+            from utils.torchnet.pointnet_normless import PointNetCls, PointNetDenseCls
         elif ptype == 'small+dropout':
-            from utils.torchnet.pointnet_small_dropout import DualNetCls, PointNetDenseCls
-
-    class Siamese(Dataset):
-        def __init__(self, transform=None):
-            
-        #init data here
-
-        def __len__(self):
-            return   #length of the data
-
-        def __getitem__(self, idx):
-            #get images and labels here 
-            #returned images must be tensor
-            #labels should be int 
-            return img1, img2 , label1, label2 
+            from utils.torchnet.pointnet_small_dropout import PointNetCls, PointNetDenseCls
 
 
 
-    def train(self, dataset_left, dataset_right, test_dataset_left, test_dataset_right):
+    def train(self, dataset, test_dataset):
 
         def randomAugment(points, alpha, beta):
             # taken from https://en.wikipedia.org/wiki/Rotation_matrix
@@ -97,7 +83,7 @@ class DualNet(object):
             pass
 
 
-        classifier = DualNetCls(k = self.num_classes)
+        classifier = PointNetCls(k = self.num_classes)
 
 
         if self.model != '':
@@ -122,7 +108,7 @@ class DualNet(object):
                 points, target = points.cuda(), target.cuda()
                 optimizer.zero_grad()
                 classifier = classifier.train()
-                pred, _ = classifier(points, points)
+                pred, _ = classifier(points)
                 # print(pred)
                 loss = F.nll_loss(pred, target)
                 loss.backward()
@@ -138,7 +124,7 @@ class DualNet(object):
                     # points = points.transpose(2,1)
                     points, target = points.cuda(), target.cuda()
                     classifier = classifier.eval()
-                    pred, _ = classifier(points, points)
+                    pred, _ = classifier(points)
                     # print(pred)
                     loss = F.nll_loss(pred, target)
                     pred_choice = pred.data.max(1)[1]

@@ -64,3 +64,16 @@ class Loader(object):
         np.random.shuffle(data_arr)
         return Variable(torch.from_numpy(data_arr))
 
+    class Siamese(Dataset):
+        def __init__(self, transform=None):
+
+        #init data here
+
+        def __len__(self):
+            return   #length of the data
+
+        def __getitem__(self, idx):
+            #get images and labels here 
+            #returned images must be tensor
+            #labels should be int 
+            return img1, img2 , label1, label2 

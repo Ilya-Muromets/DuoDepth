@@ -97,14 +97,12 @@ class PointNet(object):
         test_acc = []
         for epoch in range(self.num_epoch):
             for i, data in enumerate(dataloader, 0):
-                
-                # Ungodly indexing magic
-                points, target = data[:,:,0:self.num_points].type(torch.FloatTensor), data[:,:,self.num_points:self.num_points+1][:,0].type(torch.LongTensor)
+                points, target = data[0].type(torch.FloatTensor), data[1].type(torch.LongTensor)
 
                 # add translation/rotation augmentation
                 # randomAugment(points, self.alpha, self.beta)
 
-                points, target = Variable(points), Variable(target[:,0])
+                points, target = Variable(points), Variable(target)
                 points, target = points.cuda(), target.cuda()
                 optimizer.zero_grad()
                 classifier = classifier.train()
@@ -119,8 +117,8 @@ class PointNet(object):
 
                 if i % 10 == 0:
                     j, data = next(enumerate(testdataloader, 0))
-                    points, target = data[:,:,0:self.num_points].type(torch.FloatTensor), data[:,:,self.num_points:self.num_points+1][:,0].type(torch.LongTensor)
-                    points, target = Variable(points), Variable(target[:,0])
+                    points, target = data[0].type(torch.FloatTensor), data[1].type(torch.LongTensor)
+                    points, target = Variable(points), Variable(target)
                     # points = points.transpose(2,1)
                     points, target = points.cuda(), target.cuda()
                     classifier = classifier.eval()
@@ -138,17 +136,15 @@ class PointNet(object):
         acc = 0
         confusion_matrix = np.zeros((self.num_classes, self.num_classes))
         # empty matrix for recording instance accuracies
-        accuracy_matrix = np.zeros((self.num_classes, int(len(test_dataset)/self.num_classes)))
+        accuracy_matrix = np.zeros(len(test_dataset))
 
         classifier.eval()
         with torch.no_grad():
             # self.batchsize = 1
-            for i in range(len(test_dataset)//self.batchsize):
-                data = test_dataset[i*self.batchsize:i*self.batchsize+self.batchsize]   
-                points, target = data[:,:,0:self.num_points].type(torch.FloatTensor), data[:,:,self.num_points:self.num_points+1][:,0].type(torch.LongTensor)
-                identifier =  data[:,:,self.num_points+1:self.num_points+2][:,0]
-
-                points, target = Variable(points), Variable(target[:,0])
+            testdataloader = torch.utils.data.DataLoader(test_dataset, self.batchsize, shuffle=True)
+            for i, data in enumerate(testdataloader, 0):
+                points, target, identifier = data[0].type(torch.FloatTensor), data[1].type(torch.LongTensor), data[2]
+                points, target = Variable(points), Variable(target)
                 points, target = points.cuda(), target.cuda()
                 start = time.time()
                 pred, _ = classifier(points)
@@ -164,7 +160,7 @@ class PointNet(object):
                 for i, t in enumerate(target):
                     confusion_matrix[int(t), int(pred_choice[i])] += 1
                     if int(t) == int(pred_choice[i]): # if correct set to 1
-                        accuracy_matrix[t,int(identifier[i])] = 1 
+                        accuracy_matrix[int(identifier[i])] = 1 
             
         print("final acc: ", acc/len(test_dataset))
         return acc/len(test_dataset), confusion_matrix, accuracy_matrix
