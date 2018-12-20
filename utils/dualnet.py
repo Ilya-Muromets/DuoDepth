@@ -82,7 +82,7 @@ class DualNet(object):
             classifier.load_state_dict(torch.load(self.model))
 
 
-        optimizer = optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
+        optimizer = optim.SGD(classifier.parameters(), lr=0.005, momentum=0.9)
         classifier.cuda()
 
         num_batch = len(dataset)/self.batchsize
@@ -107,7 +107,7 @@ class DualNet(object):
                 correct = pred_choice.eq(target.data).cpu().sum()
                 # print('[%d: %d/%d] train loss: %f accuracy: %f' %(epoch, i, num_batch, loss.item(),correct.item() / float(self.batchsize)))
 
-                if i % 10 == 0:
+                if i % 50 == 0:
                     j, data = next(enumerate(testdataloader, 0))
                     points_left, points_right, target = data[0].type(torch.FloatTensor), data[1].type(torch.FloatTensor),  data[2].type(torch.LongTensor)
                     points_left, points_right, target = Variable(points_left), Variable(points_right), Variable(target)
