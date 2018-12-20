@@ -18,7 +18,7 @@ import glob
 import time
 
 class DualNet(object):
-    def __init__(self, batchsize=32, num_points=2500, num_epoch=25, outf='cls', model='', num_classes=2, alpha=0.05, beta=0.05, ptype='', train_path, test_path):
+    def __init__(self, batchsize=32, num_points=2500, num_epoch=25, outf='cls', model='', num_classes=2, alpha=0.05, beta=0.05, ptype=''):
         self.batchsize=batchsize
         self.num_points=num_points	
         self.num_epoch=num_epoch
@@ -28,35 +28,13 @@ class DualNet(object):
         self.alpha=alpha
         self.beta=beta
 
-        global DualNetCls
+        global DualNetCls, PointNetDenseCls
         if ptype == '':
-            from utils.torchnet.dualnet_small import DualNetCls
-        elif ptype == 'small':
-            from utils.torchnet.pointnet_small import DualNetCls, PointNetDenseCls
-        elif ptype == 'dropout':
-            from utils.torchnet.pointnet_dropout import DualNetCls, PointNetDenseCls
-        elif ptype == 'normless':
-            from utils.torchnet.pointnet_normless import DualNetCls, PointNetDenseCls
-        elif ptype == 'small+dropout':
-            from utils.torchnet.pointnet_small_dropout import DualNetCls, PointNetDenseCls
+            from utils.torchnet.dualnet import DualNetCls
+        elif ptype == 'modified':
+            from utils.torchnet.dualnet_modified import DualNetCls
 
-    class Siamese(Dataset):
-        def __init__(self, transform=None):
-            
-        #init data here
-
-        def __len__(self):
-            return   #length of the data
-
-        def __getitem__(self, idx):
-            #get images and labels here 
-            #returned images must be tensor
-            #labels should be int 
-            return img1, img2 , label1, label2 
-
-
-
-    def train(self, dataset_left, dataset_right, test_dataset_left, test_dataset_right):
+    def train(self, dataset, test_dataset):
 
         def randomAugment(points, alpha, beta):
             # taken from https://en.wikipedia.org/wiki/Rotation_matrix
@@ -111,18 +89,16 @@ class DualNet(object):
         test_acc = []
         for epoch in range(self.num_epoch):
             for i, data in enumerate(dataloader, 0):
-                
-                # Ungodly indexing magic
-                points, target = data[:,:,0:self.num_points].type(torch.FloatTensor), data[:,:,self.num_points:self.num_points+1][:,0].type(torch.LongTensor)
+                points_left, points_right, target = data[0].type(torch.FloatTensor), data[1].type(torch.FloatTensor),  data[2].type(torch.LongTensor)
 
                 # add translation/rotation augmentation
                 # randomAugment(points, self.alpha, self.beta)
 
-                points, target = Variable(points), Variable(target[:,0])
-                points, target = points.cuda(), target.cuda()
+                points_left, points_right, target = Variable(points_left), Variable(points_right), Variable(target)
+                points_left, points_right, target = points_left.cuda(), points_right.cuda(), target.cuda()
                 optimizer.zero_grad()
                 classifier = classifier.train()
-                pred, _ = classifier(points, points)
+                pred, _ = classifier(points_left, points_right)
                 # print(pred)
                 loss = F.nll_loss(pred, target)
                 loss.backward()
@@ -133,12 +109,11 @@ class DualNet(object):
 
                 if i % 10 == 0:
                     j, data = next(enumerate(testdataloader, 0))
-                    points, target = data[:,:,0:self.num_points].type(torch.FloatTensor), data[:,:,self.num_points:self.num_points+1][:,0].type(torch.LongTensor)
-                    points, target = Variable(points), Variable(target[:,0])
-                    # points = points.transpose(2,1)
-                    points, target = points.cuda(), target.cuda()
+                    points_left, points_right, target = data[0].type(torch.FloatTensor), data[1].type(torch.FloatTensor),  data[2].type(torch.LongTensor)
+                    points_left, points_right, target = Variable(points_left), Variable(points_right), Variable(target)
+                    points_left, points_right, target = points_left.cuda(), points_right.cuda(), target.cuda()
                     classifier = classifier.eval()
-                    pred, _ = classifier(points, points)
+                    pred, _ = classifier(points_left, points_right)
                     # print(pred)
                     loss = F.nll_loss(pred, target)
                     pred_choice = pred.data.max(1)[1]
@@ -152,20 +127,18 @@ class DualNet(object):
         acc = 0
         confusion_matrix = np.zeros((self.num_classes, self.num_classes))
         # empty matrix for recording instance accuracies
-        accuracy_matrix = np.zeros((self.num_classes, int(len(test_dataset)/self.num_classes)))
+        accuracy_matrix = np.zeros(len(test_dataset))
 
         classifier.eval()
         with torch.no_grad():
             # self.batchsize = 1
-            for i in range(len(test_dataset)//self.batchsize):
-                data = test_dataset[i*self.batchsize:i*self.batchsize+self.batchsize]   
-                points, target = data[:,:,0:self.num_points].type(torch.FloatTensor), data[:,:,self.num_points:self.num_points+1][:,0].type(torch.LongTensor)
-                identifier =  data[:,:,self.num_points+1:self.num_points+2][:,0]
-
-                points, target = Variable(points), Variable(target[:,0])
-                points, target = points.cuda(), target.cuda()
-                start = time.time()
-                pred, _ = classifier(points)
+            testdataloader = torch.utils.data.DataLoader(test_dataset, self.batchsize, shuffle=True)
+            for i, data in enumerate(testdataloader, 0):
+                points_left, points_right, target, identifier = data[0].type(torch.FloatTensor), data[1].type(torch.FloatTensor),  data[2].type(torch.LongTensor), data[3]
+                points_left, points_right, target = Variable(points_left), Variable(points_right), Variable(target)
+                points_left, points_right, target = points_left.cuda(), points_right.cuda(), target.cuda()
+                # start = time.time()
+                pred, _ = classifier(points_left, points_right)
                 # print("time: ", time.time()-start)
                 # print(target, pred)
                 loss = F.nll_loss(pred, target)
@@ -178,7 +151,7 @@ class DualNet(object):
                 for i, t in enumerate(target):
                     confusion_matrix[int(t), int(pred_choice[i])] += 1
                     if int(t) == int(pred_choice[i]): # if correct set to 1
-                        accuracy_matrix[t,int(identifier[i])] = 1 
+                        accuracy_matrix[int(identifier[i])] = 1 
             
         print("final acc: ", acc/len(test_dataset))
         return acc/len(test_dataset), confusion_matrix, accuracy_matrix

@@ -16,11 +16,11 @@ parser.add_argument('--num_classes', type=int, default = 6,  help='num classes')
 opt = parser.parse_args()
 print (opt)
 
-train_paths = ["train/open/", "train/thumbup/", "train/thumbdown/", "train/twofinger/", "train/bird/", "train/frame/"]
-test_paths =  ["test/open/", "test/thumbup/", "test/thumbdown/","test/twofinger/","test/bird/","test/frame/"]
+train_paths = ["train/zero/", "train/one/", "train/two/", "train/three/", "train/four/", "train/five/", "train/thumbup/", "train/thumbdown/", "train/frame/", "train/bird/"]
+test_paths = ["test/zero/", "test/one/", "test/two/", "test/three/", "test/four/", "test/five/", "test/thumbup/", "test/thumbdown/", "test/frame/", "test/bird/"]
 
-dataset = Mono(left=True, right=True, num_points=opt.num_points, file_paths=train_paths)
-test_dataset = Mono(left=True, right=True, num_points=opt.num_points, file_paths=test_paths)
+dataset = Mono(left=False, right=True, num_points=opt.num_points, file_paths=train_paths)
+test_dataset = Mono(left=False, right=True, num_points=opt.num_points, file_paths=test_paths)
 
-pnt = PointNet(batchsize=opt.batchsize, num_points=opt.num_points, num_epoch=opt.num_epoch, outf=opt.outf, model=opt.model, num_classes=opt.num_classes, ptype='')
-print(pnt.train(dataset, test_dataset))
+pnt = PointNet(batchsize=opt.batchsize, num_points=opt.num_points, num_epoch=opt.num_epoch, outf=opt.outf, model=opt.model, num_classes=opt.num_classes, ptype='small')
+print(pnt.train(dataset, test_dataset)[2].shape)

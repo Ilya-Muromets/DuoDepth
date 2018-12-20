@@ -1,228 +1,133 @@
 
 from utils.pointnet import PointNet
-from utils.loader import Loader
+from utils.dualnet import DualNet
+from utils.datasets import Mono, Siamese
 import argparse
 import numpy as np
 import datetime
 
 current_time = datetime.datetime.now()
-prefix = current_time.strftime("%Y-%m-%d:%H:%M")
+prefix = current_time.strftime("%m-%d:%H:%M") + "fusion"
 
+# initialize final variables for return
 test_acc = []
-test_mat = []
+test_conf = []
+test_energy = []
+
+train_paths = ["train/zero/", "train/one/", "train/two/", "train/three/", "train/four/", "train/five/", "train/thumbup/", "train/thumbdown/", "train/frame/", "train/bird/"]
+test_paths = ["test/zero/", "test/one/", "test/two/", "test/three/", "test/four/", "test/five/", "test/thumbup/", "test/thumbdown/", "test/frame/", "test/bird/"]
+
+# initialize running variables for collection
 trial_acc = []
-trial_mat = np.zeros((6,201))
-ldr_left = Loader(left=True, right=False, num_points=320)
-ldr_right = Loader(left=False, right=True, num_points=320)
-ldr_fused = Loader(left=True, right=True, num_points=320)
+trial_conf = np.zeros((len(test_paths),len(test_paths)))
+trial_energy = np.zeros(len(test_paths)*201)
 
-train_paths = ["train/open/", "train/thumbup/", "train/thumbdown/", "train/twofinger/", "train/bird/", "train/frame/"]
-test_paths =  ["test/open/", "test/thumbup/", "test/thumbdown/","test/twofinger/","test/bird/","test/frame/"]
+# IMPORTANT
+num_trials = 10
+epochs = 64
+bs = 32
+num_points = 320
 
-# single test LL:
+# Single test LL
 
-dataset = ldr_left.loadFolders(train_paths)
-test_dataset = ldr_left.loadFolders(test_paths)
+dataset = Mono(left=True, right=False, num_points=num_points, file_paths=train_paths)
+test_dataset = Mono(left=True, right=False, num_points=num_points, file_paths=test_paths)
 
-trial_num = 100
-
-for j in range(trial_num):
+for j in range(num_trials):
     print("LL: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=1, batchsize=20, ptype='', alpha=0, beta=0)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0, beta=0)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
+    trial_conf += res[1]
+    trial_energy += res[2]
 
 test_acc.append(trial_acc)
-test_mat.append(trial_mat)
+test_conf.append(trial_conf)
+test_energy.append(trial_energy)
+
+# reinitialize running variables for collection
 trial_acc = []
-trial_mat = np.zeros((6,201))
+trial_conf = np.zeros((len(test_paths),len(test_paths)))
+trial_energy = np.zeros(len(test_paths)*201)
 
 np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
+np.save("test_results/conf" + prefix, np.array(test_conf))
+np.save("test_results/energy" + prefix, np.array(test_energy))
 
-# single test LR:
+# Single test RR
 
-dataset = ldr_left.loadFolders(train_paths)
-test_dataset = ldr_right.loadFolders(test_paths)
+dataset = Mono(left=False, right=True, num_points=num_points, file_paths=train_paths)
+test_dataset = Mono(left=False, right=True, num_points=num_points, file_paths=test_paths)
 
-trial_num = 100
-
-for j in range(trial_num):
-    print("LR: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
-    res = pnt.train(dataset, test_dataset)
-    trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
-
-test_acc.append(trial_acc)
-test_mat.append(trial_mat)
-trial_acc = []
-trial_mat = np.zeros((6,201))
-
-np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
-
-# single test LF:
-
-dataset = ldr_left.loadFolders(train_paths)
-test_dataset = ldr_fused.loadFolders(test_paths)
-
-trial_num = 100
-
-for j in range(trial_num):
-    print("LF: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
-    res = pnt.train(dataset, test_dataset)
-    trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
-
-test_acc.append(trial_acc)
-test_mat.append(trial_mat)
-trial_acc = []
-trial_mat = np.zeros((6,201))
-
-np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
-
-# single test RL:
-
-dataset = ldr_right.loadFolders(train_paths)
-test_dataset = ldr_left.loadFolders(test_paths)
-
-trial_num = 100
-
-for j in range(trial_num):
-    print("RL: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
-    res = pnt.train(dataset, test_dataset)
-    trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
-
-test_acc.append(trial_acc)
-test_mat.append(trial_mat)
-trial_acc = []
-trial_mat = np.zeros((6,201))
-
-np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
-
-# single test RR:
-
-dataset = ldr_right.loadFolders(train_paths)
-test_dataset = ldr_right.loadFolders(test_paths)
-
-trial_num = 100
-
-for j in range(trial_num):
+for j in range(num_trials):
     print("RR: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0, beta=0)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
+    trial_conf += res[1]
+    trial_energy += res[2]
 
 test_acc.append(trial_acc)
-test_mat.append(trial_mat)
+test_conf.append(trial_conf)
+test_energy.append(trial_energy)
+
+# reinitialize running variables for collection
 trial_acc = []
-trial_mat = np.zeros((6,201))
+trial_conf = np.zeros((len(test_paths),len(test_paths)))
+trial_energy = np.zeros(len(test_paths)*201)
 
 np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
+np.save("test_results/conf" + prefix, np.array(test_conf))
+np.save("test_results/energy" + prefix, np.array(test_energy))
 
-# single test RF:
+# Single test F
 
-dataset = ldr_right.loadFolders(train_paths)
-test_dataset = ldr_fused.loadFolders(test_paths)
+dataset = Mono(left=True, right=True, num_points=num_points, file_paths=train_paths)
+test_dataset = Mono(left=True, right=True, num_points=num_points, file_paths=test_paths)
 
-trial_num = 100
-
-for j in range(trial_num):
-    print("RF: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
+for j in range(num_trials):
+    print("F: ", j)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0, beta=0)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
+    trial_conf += res[1]
+    trial_energy += res[2]
 
 test_acc.append(trial_acc)
-test_mat.append(trial_mat)
+test_conf.append(trial_conf)
+test_energy.append(trial_energy)
+
+# reinitialize running variables for collection
 trial_acc = []
-trial_mat = np.zeros((6,201))
+trial_conf = np.zeros((len(test_paths),len(test_paths)))
+trial_energy = np.zeros(len(test_paths)*201)
 
 np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
+np.save("test_results/conf" + prefix, np.array(test_conf))
+np.save("test_results/energy" + prefix, np.array(test_energy))
 
-# single test FL:
+# Dual test
 
-dataset = ldr_fused.loadFolders(train_paths)
-test_dataset = ldr_left.loadFolders(test_paths)
+dataset = Siamese(num_points=320, file_paths=train_paths)
+test_dataset = Siamese(num_points=320, file_paths=test_paths)
 
-trial_num = 100
-
-for j in range(trial_num):
-    print("FL: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
+for j in range(num_trials):
+    print("Dual: ", j)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='', alpha=0, beta=0)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
+    trial_conf += res[1]
+    trial_energy += res[2]
 
 test_acc.append(trial_acc)
-test_mat.append(trial_mat)
+test_conf.append(trial_conf)
+test_energy.append(trial_energy)
+
+# reinitialize running variables for collection
 trial_acc = []
-trial_mat = np.zeros((6,201))
+trial_conf = np.zeros((len(test_paths),len(test_paths)))
+trial_energy = np.zeros(len(test_paths)*201)
 
 np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
-
-# single test FR:
-
-dataset = ldr_fused.loadFolders(train_paths)
-test_dataset = ldr_right.loadFolders(test_paths)
-
-trial_num = 100
-
-for j in range(trial_num):
-    print("FR: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
-    res = pnt.train(dataset, test_dataset)
-    trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
-
-test_acc.append(trial_acc)
-test_mat.append(trial_mat)
-trial_acc = []
-trial_mat = np.zeros((6,201))
-
-np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
-
-# single test FF:
-
-dataset = ldr_fused.loadFolders(train_paths)
-test_dataset = ldr_fused.loadFolders(test_paths)
-
-trial_num = 100
-
-for j in range(trial_num):
-    print("FF: ", j)
-    pnt = PointNet(num_points=320, num_classes=6, num_epoch=32, batchsize=20, ptype='small', alpha=0, beta=0)
-    res = pnt.train(dataset, test_dataset)
-    trial_acc.append(res[0])
-    trial_mat += res[2]
-    print(trial_mat)
-
-test_acc.append(trial_acc)
-test_mat.append(trial_mat)
-trial_acc = []
-trial_mat = np.zeros((6,201))
-
-np.save("test_results/acc" + prefix, np.array(test_acc))
-np.save("test_results/mat" + prefix, np.array(test_mat))
-
+np.save("test_results/conf" + prefix, np.array(test_conf))
+np.save("test_results/energy" + prefix, np.array(test_energy))

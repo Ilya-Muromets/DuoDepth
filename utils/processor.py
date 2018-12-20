@@ -137,7 +137,7 @@ class Processor(object):
 
         npy_list_right = glob.glob(self.file_path + "*right.npy")
         npy_list_right.sort(key=natural_keys)
-
+        print(npy_list_right)
         if len(npy_list_left) != len(npy_list_right):
             raise Exception("Mismatch in file numbers.")
 
