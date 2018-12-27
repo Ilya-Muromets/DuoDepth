@@ -32,9 +32,9 @@ trial_conf = np.zeros((len(test_paths),len(test_paths)))
 trial_energy = np.zeros(len(test_paths)*201)
 
 # IMPORTANT
-num_trials = 50
-epochs = 64
-bs = 32
+num_trials = 25
+epochs = 100
+bs = 67
 num_points = 320
 
 # Single test LL
@@ -44,7 +44,7 @@ test_dataset = Mono(left=True, right=False, num_points=num_points, file_paths=te
 
 for j in range(num_trials):
     print("LL: ", j)
-    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0, beta=0.01)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0.002, beta=0.01)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
     trial_conf += res[1]
@@ -70,7 +70,7 @@ test_dataset = Mono(left=False, right=True, num_points=num_points, file_paths=te
 
 for j in range(num_trials):
     print("RR: ", j)
-    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0, beta=0.01)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0.002, beta=0.01)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
     trial_conf += res[1]
@@ -96,7 +96,7 @@ test_dataset = Mono(left=True, right=True, num_points=num_points, file_paths=tes
 
 for j in range(num_trials):
     print("F: ", j)
-    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0, beta=0.01)
+    pnt = PointNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='small', alpha=0.002, beta=0.01)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
     trial_conf += res[1]
@@ -122,7 +122,7 @@ test_dataset = Siamese(num_points=320, file_paths=test_paths)
 
 for j in range(num_trials):
     print("Dual: ", j)
-    pnt = DualNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='', alpha=0, beta=0.01)
+    pnt = DualNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='', alpha=0.002, beta=0.01)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
     trial_conf += res[1]
@@ -148,7 +148,7 @@ test_dataset = Siamese(num_points=320, file_paths=test_paths)
 
 for j in range(num_trials):
     print("Dual Mod: ", j)
-    pnt = DualNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='modified', alpha=0, beta=0.01)
+    pnt = DualNet(num_points=320, num_classes=len(test_paths), num_epoch=epochs, batchsize=bs, ptype='modified', alpha=0.002, beta=0.01)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
     trial_conf += res[1]

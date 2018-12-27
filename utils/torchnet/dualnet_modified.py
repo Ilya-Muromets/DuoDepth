@@ -83,6 +83,7 @@ class PointNetfeat(nn.Module):
         x_left = x_left.transpose(2,1)
 
         x = torch.cat((x_left, x_right), 2)
+        
         x = F.relu(self.bn1(self.conv1(x)))
         pointfeat = x
         x = F.relu(self.bn2(self.conv2(x)))

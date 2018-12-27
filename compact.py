@@ -11,8 +11,8 @@ for file_path in glob.glob("train/*/*/npys/"):
     print("finished", file_path)
 
 
-#for file_path in glob.glob("test/*/*/npys/"):
-#    pcr = Processor(file_path,crop=False, overwrite=True)
-#    pcr.fuse()
-#    print("finished", file_path)
+for file_path in glob.glob("test/*/*/npys/"):
+   pcr = Processor(file_path,crop=False, overwrite=True)
+   pcr.fuse()
+   print("finished", file_path)
 print("finished all")

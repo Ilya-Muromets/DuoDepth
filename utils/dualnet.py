@@ -18,7 +18,7 @@ import glob
 import time
 
 class DualNet(object):
-    def __init__(self, batchsize=32, num_points=2500, num_epoch=25, outf='cls', model='', num_classes=2, alpha=0.05, beta=0.05, ptype=''):
+    def __init__(self, batchsize=32, num_points=2500, num_epoch=25, outf='cls', model='', num_classes=2, alpha=0.01, beta=0, ptype=''):
         self.batchsize=batchsize
         self.num_points=num_points	
         self.num_epoch=num_epoch
@@ -36,24 +36,15 @@ class DualNet(object):
 
     def train(self, dataset, test_dataset):
 
-        def randomAugment(points, alpha, beta):
-            # taken from https://en.wikipedia.org/wiki/Rotation_matrix
-            x1, x2, x3 = np.random.rand(3)*alpha
-            d1, d2, d3 = np.random.rand(3)*beta
-
-            Rz = np.matrix([[np.cos(2 * np.pi * x1), -np.sin(2 * np.pi * x1), 0],
-                        [np.sin(2 * np.pi * x1), np.cos(2 * np.pi * x1), 0],
-                        [0, 0, 1]])
-            Ry = np.matrix([[np.cos(2 * np.pi * x2), 0,-np.sin(2 * np.pi * x2)],
-                        [0,1,0],
-                        [-np.sin(2 * np.pi * x2), 0,np.cos(2 * np.pi * x2)]])
-            Rx = np.matrix([[1, 0, 0],
-                        [0, np.cos(2 * np.pi * x3),-np.sin(2 * np.pi * x3)],
-                        [0, np.sin(2 * np.pi * x3), np.cos(2 * np.pi * x3)]])
-            rand_rot = np.dot(np.dot(Rx,Ry),Rz)
-            disp = np.array([[d1],[d2],[d3]])
-            for i in range(len(points)):
-                points[i] = Variable(torch.from_numpy(np.dot(rand_rot, points[i]) + disp))
+        def randomAugment(points_left, points_right, alpha, beta):
+            disp = np.random.rand(3,1)*beta
+            disp = np.tile(disp,self.num_points)
+            noise_left = np.random.normal(0,alpha,(3,self.num_points))
+            noise_right = np.random.normal(0,alpha,(3,self.num_points))
+            
+            for i in range(len(points_left)):        
+                points_left[i] = points_left[i].add(Variable(torch.from_numpy(disp + noise_left)).type(torch.FloatTensor))
+                points_right[i] = points_right[i].add(Variable(torch.from_numpy(disp + noise_right)).type(torch.FloatTensor))
 
         blue = lambda x:'\033[94m' + x + '\033[0m'
 
@@ -82,7 +73,7 @@ class DualNet(object):
             classifier.load_state_dict(torch.load(self.model))
 
 
-        optimizer = optim.SGD(classifier.parameters(), lr=0.005, momentum=0.9)
+        optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.99)
         classifier.cuda()
 
         num_batch = len(dataset)/self.batchsize
@@ -91,8 +82,8 @@ class DualNet(object):
             for i, data in enumerate(dataloader, 0):
                 points_left, points_right, target = data[0].type(torch.FloatTensor), data[1].type(torch.FloatTensor),  data[2].type(torch.LongTensor)
 
-                # add translation/rotation augmentation
-                # randomAugment(points, self.alpha, self.beta)
+                # add translation/jitter augmentation
+                randomAugment(points_left, points_right, self.alpha, self.beta)
 
                 points_left, points_right, target = Variable(points_left), Variable(points_right), Variable(target)
                 points_left, points_right, target = points_left.cuda(), points_right.cuda(), target.cuda()

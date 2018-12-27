@@ -4,10 +4,11 @@ import open3d as od
 import re
 import os
 import threading
+import scipy.signal
 
 class Processor(object):
     # initialise with limits for point cloud cropping, as well as file path
-    def __init__(self, file_path, xlim=10, ylim=10, zlim=0.1, crop=True, overwrite=False):
+    def __init__(self, file_path, xlim=100, ylim=100, zlim=0.1, crop=True, overwrite=False):
         self.xlim = xlim
         self.ylim = ylim
         self.zlim = zlim
@@ -137,7 +138,7 @@ class Processor(object):
 
         npy_list_right = glob.glob(self.file_path + "*right.npy")
         npy_list_right.sort(key=natural_keys)
-        print(npy_list_right)
+        # print(npy_list_right)
         if len(npy_list_left) != len(npy_list_right):
             raise Exception("Mismatch in file numbers.")
 
@@ -151,17 +152,39 @@ class Processor(object):
             t.start()
 
     def fuse_worker(self, npy_list_left, npy_list_right, transform):
-        def croppedValues(arr, min_dist):
+        def croppedValues(arr):
             crop = []
-            if min_dist > 0.05:
+            hist = np.histogram(arr[:,2], 30)
+            print(hist)
+            peaks = scipy.signal.find_peaks(hist[0], height=len(arr[:,2])/40,distance=15)
+            # print(peaks)
+
+            if len(peaks[0]) >= 2: # two peaks, cut face/body, isolate hand
+                peak1 = peaks[0][0]
+                peak2 = peaks[0][1]
+                min_z = max(hist[1][peak1+5], hist[1][peak2-5])
+
+            elif len(peaks[0]) == 1: # one peak, isolate hand
+                peak = peaks[0][0]
+                min_z = hist[1][peak+5]
+
+            else: # no peaks, um, try something else...
+                min_z = hist[1][2] + 0.2
+
+            for i, entry in enumerate(arr):
+                if entry[2] <= (min_z):
+                    crop.append(i)
+
+            if len(crop) < 320: # we accidentally cropped the whole thing
+                min_z = min(arr[:,2]) + 0.15
+
                 for i, entry in enumerate(arr):
-                    if abs(entry[0]) <= self.xlim and abs(entry[1]) <= self.ylim and abs(entry[2]) <= (min_dist + self.zlim):
+                    if entry[2] <= (min_z):
                         crop.append(i)
-            else:
-                for i, entry in enumerate(arr):
-                    if abs(entry[0]) <= self.xlim and abs(entry[1]) <= self.ylim and abs(entry[2]) <= 0.65:
-                        crop.append(i)
+                if len(crop) < 320: 
+                    return list(range(0,len(arr.T[0])))
             return crop
+
 
         for i in range(len(npy_list_left)):
             source_name = npy_list_right[i]
@@ -173,30 +196,30 @@ class Processor(object):
             source = np.transpose(source)
             target = np.transpose(target)
 
-            source = source[croppedValues(source, np.min(source.T[2]))]
-            target = target[croppedValues(target, np.min(target.T[2]))]
-
             source_pcd = od.PointCloud()
             source_pcd.points = od.Vector3dVector(source)
 
             target_pcd = od.PointCloud()
             target_pcd.points = od.Vector3dVector(target)
+
+            source = source[croppedValues(source)]
+            target = target[croppedValues(target)]
             
             # voxel downsampling
-            source_pcd = od.voxel_down_sample(source_pcd, voxel_size = 0.0035)
-            target_pcd = od.voxel_down_sample(target_pcd, voxel_size = 0.0035)
+            source_pcd = od.voxel_down_sample(source_pcd, voxel_size = 0.008)
+            target_pcd = od.voxel_down_sample(target_pcd, voxel_size = 0.008)
 
+            np.save(source_name[:-4] + "reduced",  np.asarray(source_pcd.points).T)
             source_pcd.transform(transform)
+            np.save(source_name[:-4] + "reducedtrans",  np.asarray(source_pcd.points).T)
+
 
             # od.draw_geometries([source_pcd])
             # od.draw_geometries([target_pcd])
 
-            source = np.asarray(source_pcd.points)
-            target = np.asarray(target_pcd.points)
-
-            source = np.transpose(source)
-            target = np.transpose(target)
-            np.save(source_name[:-4] + "reduced", source)
+            source = np.asarray(source_pcd.points).T
+            target = np.asarray(target_pcd.points).T    
+            
             np.save(target_name[:-4] + "reduced", target)
             np.save(target_name[:-8] + "fused", np.concatenate((source, target), axis=1))
             print("reduced: ", source_name," and ", target_name)

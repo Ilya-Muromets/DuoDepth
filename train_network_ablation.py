@@ -115,7 +115,7 @@ np.save("test_results/acc" + prefix, np.array(test_acc))
 np.save("test_results/mat" + prefix, np.array(test_mat))
 
 for j in range(trial_num):
-    print("dualnet: ", j)
+    print("dualnet modified: ", j)
     pnt = DualNet(num_points=320, num_classes=10, num_epoch=30, batchsize=32, ptype='modified', alpha=0, beta=0)
     res = pnt.train(dataset, test_dataset)
     trial_acc.append(res[0])
@@ -130,4 +130,5 @@ trial_mat = np.zeros((10,10))
 
 np.save("test_results/acc" + prefix, np.array(test_acc))
 np.save("test_results/mat" + prefix, np.array(test_mat))
+
 
