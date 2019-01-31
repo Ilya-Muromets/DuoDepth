@@ -44,10 +44,12 @@ Preprocessing file for point clouds that didn't come out in the right data forma
 All architecture is written using PyTorch and is runs on PyTorch 0.4.0.  
 The train_\*.py files are the most top-level files and execute loading the datasets, training on them, and saving/printing accuracy results. utils/pointnet.py and utils/dualnet.py implement training and optimization. utils/torchnet/pointnet/ contains all the various architectures to train on.  
 
+This is not production ready code, but if you're a tired grad student who is used to this kind of thing then I hope you can find it useful.  
+
 A big thanks fxia22 as much of this code would not be possible without https://github.com/fxia22/pointnet.pytorch.  
 
 ## Dataset
-Not yet available, sorry. Will post as soon as I am done revisions on my paper and it is safe to divulge everything.
+Not yet available, sorry. Will post as soon as I am done revisions on my paper and it is more safe to divulge everything.
 
 Good luck.
 -Ilya
