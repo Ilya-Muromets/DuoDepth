@@ -49,7 +49,7 @@ This is not production ready code, but if you're a tired grad student who is use
 A big thanks fxia22 as much of this code would not be possible without https://github.com/fxia22/pointnet.pytorch.  
 
 ## Dataset
-Not yet available, sorry. Will post as soon as I am done revisions on my paper and it is more safe to divulge everything.
+https://drive.google.com/open?id=1-nHLWO1fVMprPBvNDVsLZKLB8zvrqUWk
 
 Good luck.
 -Ilya
