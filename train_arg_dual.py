@@ -1,5 +1,5 @@
 from utils.dualnet import DualNet
-from utils.datasets import Siamese
+from utils.datasets import DuoDataset
 import argparse
 import numpy as np
 ## load arguments
@@ -19,8 +19,8 @@ print (opt)
 train_paths = ["train/zero/", "train/one/", "train/two/", "train/three/", "train/four/", "train/five/", "train/thumbup/", "train/thumbdown/", "train/frame/", "train/bird/"]
 test_paths = ["test/zero/", "test/one/", "test/two/", "test/three/", "test/four/", "test/five/", "test/thumbup/", "test/thumbdown/", "test/frame/", "test/bird/"]
 
-dataset = Siamese(num_points=opt.num_points, file_paths=train_paths)
-test_dataset = Siamese(num_points=opt.num_points, file_paths=test_paths)
+dataset = DuoDataset(num_points=opt.num_points, file_paths=train_paths)
+test_dataset = DuoDataset(num_points=opt.num_points, file_paths=test_paths)
 
 pnt = DualNet(batchsize=opt.batchsize, num_points=opt.num_points, num_epoch=opt.num_epoch, outf=opt.outf, model=opt.model, num_classes=opt.num_classes, ptype='modified')
 print(pnt.train(dataset, test_dataset))

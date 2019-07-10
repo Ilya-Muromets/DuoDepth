@@ -1,5 +1,5 @@
 from utils.pointnet import PointNet
-from utils.datasets import Mono
+from utils.datasets import MonoDataset
 import argparse
 import numpy as np
 import datetime
@@ -19,8 +19,8 @@ else:
 train_paths = ["train/zero/", "train/one/", "train/two/", "train/three/", "train/four/", "train/five/", "train/thumbup/", "train/thumbdown/", "train/frame/", "train/bird/"]
 test_paths = ["test/zero/", "test/one/", "test/two/", "test/three/", "test/four/", "test/five/", "test/thumbup/", "test/thumbdown/", "test/frame/", "test/bird/"]
 
-dataset = Mono(left=True, right=True, num_points=320, file_paths=train_paths)
-test_dataset = Mono(left=True, right=True, num_points=320, file_paths=test_paths)
+dataset = MonoDataset(left=True, right=True, num_points=320, file_paths=train_paths)
+test_dataset = MonoDataset(left=True, right=True, num_points=320, file_paths=test_paths)
 
 num_trials = 25
 trial = []

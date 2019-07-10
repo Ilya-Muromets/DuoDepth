@@ -1,7 +1,7 @@
 
 from utils.pointnet import PointNet
 from utils.dualnet import DualNet
-from utils.datasets import Mono, Siamese
+from utils.datasets import MonoDataset, DuoDataset
 import argparse
 import numpy as np
 import datetime
@@ -39,8 +39,8 @@ num_points = 320
 
 # Single test LL
 
-dataset = Mono(left=True, right=False, num_points=num_points, file_paths=train_paths)
-test_dataset = Mono(left=True, right=False, num_points=num_points, file_paths=test_paths)
+dataset = MonoDataset(left=True, right=False, num_points=num_points, file_paths=train_paths)
+test_dataset = MonoDataset(left=True, right=False, num_points=num_points, file_paths=test_paths)
 
 for j in range(num_trials):
     print("LL: ", j)
@@ -65,8 +65,8 @@ np.save(path + "energy", np.array(test_energy))
 
 # Single test RR
 
-dataset = Mono(left=False, right=True, num_points=num_points, file_paths=train_paths)
-test_dataset = Mono(left=False, right=True, num_points=num_points, file_paths=test_paths)
+dataset = MonoDataset(left=False, right=True, num_points=num_points, file_paths=train_paths)
+test_dataset = MonoDataset(left=False, right=True, num_points=num_points, file_paths=test_paths)
 
 for j in range(num_trials):
     print("RR: ", j)
@@ -91,8 +91,8 @@ np.save(path + "energy", np.array(test_energy))
 
 # Single test F
 
-dataset = Mono(left=True, right=True, num_points=num_points, file_paths=train_paths)
-test_dataset = Mono(left=True, right=True, num_points=num_points, file_paths=test_paths)
+dataset = MonoDataset(left=True, right=True, num_points=num_points, file_paths=train_paths)
+test_dataset = MonoDataset(left=True, right=True, num_points=num_points, file_paths=test_paths)
 
 for j in range(num_trials):
     print("F: ", j)
@@ -117,8 +117,8 @@ np.save(path + "energy", np.array(test_energy))
 
 # Dual test
 
-dataset = Siamese(num_points=320, file_paths=train_paths)
-test_dataset = Siamese(num_points=320, file_paths=test_paths)
+dataset = DuoDataset(num_points=320, file_paths=train_paths)
+test_dataset = DuoDataset(num_points=320, file_paths=test_paths)
 
 for j in range(num_trials):
     print("Dual: ", j)
@@ -143,8 +143,8 @@ np.save(path + "energy", np.array(test_energy))
 
 # Dual test modified
 
-dataset = Siamese(num_points=320, file_paths=train_paths)
-test_dataset = Siamese(num_points=320, file_paths=test_paths)
+dataset = DuoDataset(num_points=320, file_paths=train_paths)
+test_dataset = DuoDataset(num_points=320, file_paths=test_paths)
 
 for j in range(num_trials):
     print("Dual Mod: ", j)

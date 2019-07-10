@@ -1,7 +1,7 @@
 
 from utils.pointnet import PointNet
 from utils.dualnet import DualNet
-from utils.datasets import Siamese, Mono
+from utils.datasets import DuoDataset, MonoDataset
 import argparse
 import numpy as np
 import datetime
@@ -17,8 +17,8 @@ trial_mat = np.zeros((10,10))
 train_paths = ["train/zero/", "train/one/", "train/two/", "train/three/", "train/four/", "train/five/", "train/thumbdown/", "train/thumbup/", "train/frame/", "train/bird/"]
 test_paths = ["test/zero/", "test/one/", "test/two/", "test/three/", "test/four/", "test/five/", "test/thumbdown/", "test/thumbup/", "test/frame/", "test/bird/"]
 
-dataset = Mono(left=True, right=False, num_points=320, file_paths=train_paths)
-test_dataset = Mono(left=True, right=False, num_points=320, file_paths=test_paths)
+dataset = MonoDataset(left=True, right=False, num_points=320, file_paths=train_paths)
+test_dataset = MonoDataset(left=True, right=False, num_points=320, file_paths=test_paths)
 
 # single test nominal:
 num_trials = 10
@@ -94,8 +94,8 @@ trial_mat = np.zeros((10,10))
 np.save("test_results/acc" + prefix, np.array(test_acc))
 np.save("test_results/mat" + prefix, np.array(test_mat))
 
-dataset = Siamese(num_points=320, file_paths=train_paths)
-test_dataset = Siamese(num_points=320, file_paths=test_paths)
+dataset = DuoDataset(num_points=320, file_paths=train_paths)
+test_dataset = DuoDataset(num_points=320, file_paths=test_paths)
 
 for j in range(trial_num):
     print("dualnet: ", j)

@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader, Dataset
 
-class Mono(Dataset):
+class MonoDataset(Dataset):
     def __init__(self, transform=None, left=True, right=True, num_points=320, file_paths=''):
         self.identifiers = []
         self.targets = []
@@ -52,7 +52,7 @@ class Mono(Dataset):
         #labels should be int
         return self.data[idx], self.targets[idx], self.identifiers[idx]
 
-class Siamese(Dataset):
+class DuoDataset(Dataset):
     def __init__(self, transform=None, num_points=320, file_paths=''):
         self.identifiers = []
         self.targets = []

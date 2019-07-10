@@ -1,6 +1,6 @@
 
 from utils.pointnet import PointNet
-from utils.loader import Loader
+from utils.datasets import MonoDataset
 import argparse
 import numpy as np
 import datetime
@@ -12,9 +12,9 @@ test_acc = []
 test_mat = []
 trial_acc = []
 trial_mat = np.zeros((6,6))
-ldr_left = Loader(left=True, right=False, num_points=320)
-ldr_right = Loader(left=False, right=True, num_points=320)
-ldr_fused = Loader(left=True, right=True, num_points=320)
+ldr_left = MonoDataset(left=True, right=False, num_points=320)
+ldr_right = MonoDataset(left=False, right=True, num_points=320)
+ldr_fused = MonoDataset(left=True, right=True, num_points=320)
 
 train_paths = ["train/open/", "train/thumbup/", "train/thumbdown/", "train/twofinger/", "train/bird/", "train/frame/"]
 test_paths =  ["test/open/", "test/thumbup/", "test/thumbdown/","test/twofinger/","test/bird/","test/frame/"]
