@@ -1,4 +1,4 @@
-This is the official code repository for: https://arxiv.org/abs/2006.14691
+This is the official code repository for the work "Duodepth: Static Gesture Recognition Via Dual Depth Sensors": https://arxiv.org/abs/2006.14691
 
 This repository contains tools I used to record and process data from two Intel RealSense D415 cameras.  
 It might not be the most efficient implementation of these tools, but I hope it to be functional and relatively human readable.  
