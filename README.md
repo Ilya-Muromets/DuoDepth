@@ -51,9 +51,5 @@ This is not production ready code, but most research isn’t; I hope you can fin
 
 A big thanks fxia22 as much of this code would not be possible without https://github.com/fxia22/pointnet.pytorch.  
 
-## Dataset
-Dataset can be downloaded from:
-https://drive.google.com/open?id=1-nHLWO1fVMprPBvNDVsLZKLB8zvrqUWk
-
 Good luck.  
 -	Ilya
